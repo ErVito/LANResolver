@@ -56,7 +56,7 @@ Run the script in deamon mode:
 bash $HOME/LANResolver/LANResolver.sh -d
 ```
 
-In that mode the program will execute a `sudo arp-scan -l` every 5 minutes (by deafult, the period can be modified changing directly the constant `SCAN_PERIOD` defined in the script).
+In that mode the program will execute a `sudo arp-scan -I $interface $network` every 5 minutes (by deafult, the period can be modified changing directly the constant `SCAN_PERIOD` defined in the script).
 
 The root permissions are required only to run the scan but, once inserted the password when the program is executed in daemon mode, it replies to the subsequent resolution requests without any other input by the user.
 
@@ -97,7 +97,10 @@ If two or more resolutions match a given IP or MAC, the program will show some o
 It will be shown the resolutions of the type with the greater weight and the matching resolutions that aren't of a native type (neither `static` nor `dynamic`) will be always shown.
 
 ## Versions
-1.0.0 - First public release
+Version | Date (YYYY-MM-DD) | Description
+------- | ----------------- | -----------
+1.0.0 | 2021-01-18 | First public release
+1.1.0 | 2021-06-30 | Scanning extent to all interfaces
 
 ## Credits
 This script has been written by ErVito

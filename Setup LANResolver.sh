@@ -21,9 +21,10 @@
 # |                                                                 |
 # | Versions:                                                       |
 # |   1.0.0       First public release                              |
+# |   1.1.0       Scanning extent to all interfaces                 |
 # \_________________________________________________________________/
 
-echo "LANResolver installer v1.0.0"
+echo "LANResolver installer v1.1.0"
 echo
 
 if [[ ! -e "$HOME/LANResolver" ]]
@@ -59,6 +60,7 @@ cat >LANResolver.sh <<'EOF'
 # |                                                                 |
 # | Versions:                                                       |
 # |   1.0.0       First public release                              |
+# |   1.1.0       Scanning extent to all interfaces                 |
 # \_________________________________________________________________/
 
 #########################################################
@@ -74,7 +76,7 @@ WEIGHT_STATIC_RESOLUTIONS=0
 #########################################################
 BASE_DIR_PATH="$HOME/LANResolver"
 LAN_RESOLVER_MAJOR=1
-LAN_RESOLVER_MINOR=0
+LAN_RESOLVER_MINOR=1
 LAN_RESOLVER_PATCH=0
 
 #########################################################
@@ -189,6 +191,53 @@ function filter_resolutions() {
     else
         debug $verbosity "Filter resolutions expects two parameters.\n"
     fi
+}
+
+# Public: Get the ip addresses and the states of each interface
+#
+# The information is stored in a CSV format in the global array "interfaces".
+function get_interfaces_info() {
+    interfaces=()
+    while read line
+    do
+        id=${line%%:*}
+        if [[ ! $id =~ [^[:digit:]] ]]
+        then
+            
+            line="${line#*:}"
+            line="$(trim $line)"
+            interface=${line%%:*}
+            line="${line#*state }"
+            state=${line%% *}
+        else
+            line="$(trim $line)"
+            ip_version=${line%% *}
+            if [[ $ip_version == "inet" ]]
+            then
+                line="${line#*inet }"
+                ip=${line%% *}
+                interface_already_exists=false
+                remove_entry_index=0
+                for ((index=0; index < ${#interfaces[@]}; index++))
+                do
+                    if [[ ${entry[index]%%,*} == $interface ]]
+                    then
+                        entry=${entry[index]#*,}
+                        if [[ ${entry[index]%%,*} == "" && ${entry[index]#*,} == $state ]]
+                        then
+                            interface_already_exists=true
+                            remove_entry_index=index
+                        fi
+                    fi
+                done
+                if $interface_already_exists
+                then
+                    interfaces=(${interfaces[@]:0:remove_entry_index} ${interfaces[@]:((remove_entry_index+1))})
+                fi
+                interfaces+=($interface,$ip,$state)
+            fi
+        fi
+    done < <(ip address)
 }
 
 # Public: Getter function for the IP address.
@@ -570,6 +619,7 @@ daemon_mode=false
 resolutions=()
 verbosity=0
 
+commands+=("get_interfaces_info")
 commands+=("import_resolutions "$BASE_DIR_PATH/static_resolutions.csv"")
 
 if (($# > 0))                           # $# = number of arguments passed to the script
@@ -775,8 +825,23 @@ then
         filter_resolutions "only" "static"
         export_resolutions "filtered" "$BASE_DIR_PATH/static_resolutions.csv"
 
+        debug $verbosity "Getting interfaces info..."
+        get_interfaces_info
+        debug $verbosity "done.\n"
+
         debug $verbosity "Starting ARP scan...\n"
-        arp_output="$(sudo arp-scan -l)"
+        arp_output=""
+        for entry in ${interfaces[@]}
+        do
+            interface=${entry%%,*}
+            entry=${entry#*,}
+            network=${entry%,*}
+            state=${entry#*,}
+            if [[ $state == "UP" ]]
+            then
+                arp_output="$arp_output$(sudo arp-scan -I $interface $network)"
+            fi 
+        done
         debug $verbosity "ARP scan completed.\n"
 
         while read line
