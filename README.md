@@ -20,14 +20,14 @@ In that mode the program executes cyclically an [arp-scan](https://en.wikipedia.
 
 ## Installation
 
-Run the setup to install the script in your home (it will be placed in `$HOME/LANResolver`):
+Run the setup to install the script (if it won't specified any other destination the script will be placed in `$HOME/LANResolver`):
 ```
 bash /absolute/path/to/Setup\ LANResolver.sh
 ```
 
 ## Configuration
 
-Once installed, the script `$HOME/LANResolver/LANResolver.sh` can be tuned changing the following variables that are declared at the beginning of the program:
+Once installed, the script `/absolute/path/to/LANResolver.sh` can be tuned changing the following variables that are declared at the beginning of the program:
 
 Parameter | Unit | Default | Description
 --------- | ---- | ------- | -----------
@@ -53,7 +53,7 @@ Option | Description
 
 Run the script in deamon mode:
 ```
-bash $HOME/LANResolver/LANResolver.sh -d
+bash /absolute/path/to/LANResolver.sh -d
 ```
 
 In that mode the program will execute a `sudo arp-scan -I $interface $network` every 5 minutes (by deafult, the period can be modified changing directly the constant `SCAN_PERIOD` defined in the script).
@@ -62,7 +62,7 @@ The root permissions are required only to run the scan but, once inserted the pa
 
 Print all the resolutions stored in the internal list (added statically by the user or inserted dinamically by the program):
 ```
-bash $HOME/LANResolver/LANResolver.sh -l
+bash /absolute/path/to/LANResolver.sh -l
 ```
 
 Let's say that only one device has replied to the last arp-scan and any static resolution has been added, an example of output is:
@@ -79,7 +79,7 @@ aa:bb:cc:dd:ee:ff | The MAC address of the device that has replied to the ARP re
 
 Add a static resolution for the device a1:b1:c1:d1:e1:f1 which has static IP 192.168.1.234, execute this command:
 ```
-bash $HOME/LANResolver/LANResolver.sh -s 192.168.1.234 a1:b1:c1:d1:e1:f1
+bash /absolute/path/to/LANResolver.sh -s 192.168.1.234 a1:b1:c1:d1:e1:f1
 ```
 
 Printing now the resolution list it will be:
@@ -90,7 +90,7 @@ static,192.168.1.234,a1:b1:c1:d1:e1:f1,1609459345
 
 To see which IP has received a known device/MAC (let's say aa:bb:cc:dd:ee:ff) run the get command (`-g` option):
 ```
-bash $HOME/LANResolver/LANResolver.sh -g aa:bb:cc:dd:ee:ff
+bash /absolute/path/to/LANResolver.sh -g aa:bb:cc:dd:ee:ff
 ```
 
 If two or more resolutions match a given IP or MAC, the program will show some of them accordingly to the type of each resolution (`static` and `dynamic`) and the values of the constants `WEIGHT_DYNAMIC_RESOLUTIONS` and `WEIGHT_STATIC_RESOLUTIONS` defined in the script.
@@ -101,6 +101,7 @@ Version | Date (YYYY-MM-DD) | Description
 ------- | ----------------- | -----------
 1.0.0 | 2021-01-18 | First public release
 1.1.0 | 2021-06-30 | Scanning extent to all interfaces
+1.1.1 | 2021-12-01 | Handling versioning and custom installation path
 
 ## Credits
 This script has been written by ErVito

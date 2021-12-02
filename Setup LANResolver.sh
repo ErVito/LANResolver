@@ -22,18 +22,51 @@
 # | Versions:                                                       |
 # |   1.0.0       First public release                              |
 # |   1.1.0       Scanning extent to all interfaces                 |
+# |   1.1.1       Handling versioning and custom installation path  |
 # \_________________________________________________________________/
 
-echo "LANResolver installer v1.1.0"
+
+install_dir_path="$1"
+MAJOR=1
+MINOR=1
+PATCH=1
+
+echo "LANResolver installer v$MAJOR.$MINOR.$PATCH"
 echo
 
-if [[ ! -e "$HOME/LANResolver" ]]
+if [[ "$install_dir_path" == "" ]]
 then
-    echo "Creating directory \"$HOME/LANResolver\"..."
-    mkdir -p "$HOME/LANResolver"
+    read -t 30 -p "Installation path [$HOME/LANResolver]: " install_dir_path
 fi
 
-cd "$HOME/LANResolver"
+if [[ "$install_dir_path" == "" ]]
+then
+    INSTALL_DIR_PATH="$HOME/LANResolver"
+else
+    if [[ "$install_dir_path" != "/" ]]
+    then
+        install_dir_path="${install_dir_path%*\/}"
+    fi
+    INSTALL_DIR_PATH="$install_dir_path"
+fi
+
+if [[ ! -e "$INSTALL_DIR_PATH" ]]
+then
+    echo "Creating directory \"$INSTALL_DIR_PATH\"..."
+    mkdir -p "$INSTALL_DIR_PATH"
+fi
+
+# The following check fails either if the user doesn't
+# have writing permission on the directory and also if
+# the directory hasn't been created previously.
+if [[ ! -w "$INSTALL_DIR_PATH" ]]
+then
+    printf "Error: you don't have permissions to "
+    echo "create the directory or to write on it."
+    exit 1
+fi
+
+cd "$INSTALL_DIR_PATH"
 
 echo "Creating the script..."
 cat >LANResolver.sh <<'EOF'
@@ -61,6 +94,7 @@ cat >LANResolver.sh <<'EOF'
 # | Versions:                                                       |
 # |   1.0.0       First public release                              |
 # |   1.1.0       Scanning extent to all interfaces                 |
+# |   1.1.1       Handling versioning and custom installation path  |
 # \_________________________________________________________________/
 
 #########################################################
@@ -74,10 +108,10 @@ WEIGHT_STATIC_RESOLUTIONS=0
 #########################################################
 ###                     CONSTANTS                     ###
 #########################################################
-BASE_DIR_PATH="$HOME/LANResolver"
-LAN_RESOLVER_MAJOR=1
-LAN_RESOLVER_MINOR=1
-LAN_RESOLVER_PATCH=0
+BASE_DIR_PATH="$INSTALL_DIR_PATH"
+VERSION_MAJOR="$MAJOR"
+VERSION_MINOR="$MINOR"
+VERSION_PATCH="$PATCH"
 
 #########################################################
 ###                     FUNCTIONS                     ###
@@ -874,6 +908,11 @@ then
     done
 fi
 EOF
+
+sed -i 's@\$INSTALL_DIR_PATH@'"$INSTALL_DIR_PATH"'@' LANResolver.sh
+sed -i 's@\$MAJOR@'"$MAJOR"'@' LANResolver.sh
+sed -i 's@\$MINOR@'"$MINOR"'@' LANResolver.sh
+sed -i 's@\$PATCH@'"$PATCH"'@' LANResolver.sh
 
 echo "Making the script executable..."
 sudo chmod +x "LANResolver.sh"
